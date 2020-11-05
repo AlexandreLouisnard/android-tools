@@ -24,203 +24,6 @@ public class Utils {
         // Tag
         public static final String TAG = Utils.class.getSimpleName();
 
-        /* #region Java Objects & introspection */
-        /**
-         * Tries to get {@code field} on the given {@link Object}.<br/>
-         *
-         * @param o
-         * @param field
-         * @return
-         */
-        public static Object runGetter(Object o, Field field) {
-                return runGetter(o, field.getName());
-        }
-
-        /**
-         * Tries to get {@code fieldName} on the given {@link Object}.<br/>
-         * For instance, runGetter(car, "door") will try to run car.getDoor() and return
-         * the result or null if it failed.
-         *
-         * @param o
-         * @param fieldName
-         * @return
-         */
-        public static Object runGetter(Object o, String fieldName) {
-                for (Method method : o.getClass().getMethods()) {
-                        if ((method.getName().startsWith("get"))
-                                        && (method.getName().length() == (fieldName.length() + 3))) {
-                                if (method.getName().toLowerCase().endsWith(fieldName.toLowerCase())) {
-                                        try {
-                                                return method.invoke(o);
-                                        } catch (IllegalAccessException | InvocationTargetException e) {
-                                                Log.d(TAG, "Could not determine method: " + method.getName());
-                                        }
-                                }
-                        }
-                }
-                return null;
-        }
-
-        /**
-         * Gets all {@link Field}s for a given {@link Class}.
-         *
-         * @param type
-         * @return
-         */
-        public static List<Field> getAllFields(Class<?> type) {
-                return _getAllFields(new LinkedList<>(), type);
-        }
-
-        /**
-         * Recursive part of {@link #getAllFields(Class)}.
-         *
-         * @param fields
-         * @param type
-         * @return
-         */
-        private static List<Field> _getAllFields(List<Field> fields, Class<?> type) {
-                fields.addAll(Arrays.asList(type.getDeclaredFields()));
-
-                if (type.getSuperclass() != null) {
-                        _getAllFields(fields, type.getSuperclass());
-                }
-
-                return fields;
-        }
-
-        /**
-         * Returns a cloned {@link Object} if the parameter is {@link Cloneable}, or
-         * directly the value if not.
-         *
-         * @param o
-         * @return
-         */
-        public static Object cloneIfPossible(Object o) {
-                if (o == null) {
-                        return null;
-                }
-                if (o instanceof Cloneable) {
-                        try {
-                                return o.getClass().getMethod("clone").invoke(o);
-                        } catch (Exception e) {
-                                e.printStackTrace();
-                                return o;
-                        }
-                } else {
-                        return o;
-                }
-        }
-        /* #endregion */
-
-        /* #region Binary & hexa tools */
-        /**
-         * Converts byte to hexadecimal {@link String}.
-         *
-         * @param b
-         * @return the binary {@link String} representation
-         */
-        public static String toBinaryString(byte b) {
-                return String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0');
-        }
-
-        /**
-         * Converts int to hexadecimal {@link String}.
-         *
-         * @param i
-         * @return the binary {@link String} representation
-         */
-        public static String toBinaryString(int i) {
-                return String.format("%16s", Integer.toBinaryString(i)).replace(' ', '0');
-        }
-
-        /**
-         * Converts byte[] to hexadecimal {@link String}.
-         *
-         * @param bytes
-         * @return the hexadecimal {@link String} representation
-         */
-        public static String toHexaString(byte[] bytes) {
-                StringBuilder sb = new StringBuilder();
-                for (byte b : bytes) {
-                        sb.append(String.format("%02X ", b));
-                }
-                return sb.toString();
-        }
-
-        /**
-         * Converts byte[] to hexadecimal {@link String}.
-         *
-         * @param bytes
-         * @param maxLength
-         * @return the hexadecimal {@link String} representation
-         */
-        public static String toHexaString(byte[] bytes, int maxLength) {
-                StringBuilder sb = new StringBuilder();
-                for (byte b : bytes) {
-                        sb.append(String.format("%02X ", b));
-                        if (sb.length() >= maxLength) {
-                                break;
-                        }
-                }
-                return sb.toString();
-        }
-
-        /**
-         * Returns the digit of the given number at the given position (starting from
-         * 0).
-         *
-         * @param number
-         * @param position
-         * @return
-         * @throws IndexOutOfBoundsException
-         */
-        public static byte getDigit(int number, int position) throws IndexOutOfBoundsException {
-                return Byte.parseByte(Integer.toString(number).substring(position, position + 1));
-        }
-
-        /**
-         * For the given {@code number}, returns the bit value at {@code bitIndex}.
-         *
-         * @param number
-         * @param bitIndex
-         * @return the bit value (0 or 1).
-         */
-        public static int getBit(int number, int bitIndex) {
-                return (number >> bitIndex) & 1;
-        }
-
-        /**
-         * For the given {@code number}, sets the bit at {@code bitIndex} to
-         * {@code bitValue}, and returns the new number value.
-         *
-         * @param number
-         * @param bitIndex 0 (LSB) to n (MSB)
-         * @param bitValue 0 or 1
-         * @return the new number value
-         */
-        public static int setBit(int number, int bitIndex, int bitValue) {
-                if (bitValue == 0) {
-                        return number & ~(1 << bitIndex);
-                } else if (bitValue == 1) {
-                        return number | 1 << bitIndex;
-                } else {
-                        return number;
-                }
-        }
-
-        /**
-         * For the given {@code number}, toggles the bit value at {@code bitIndex}, and
-         * returns the new number value.
-         *
-         * @param number
-         * @param bitIndex
-         * @return the new number value
-         */
-        public static int toggleBit(int number, int bitIndex) {
-                return number ^ 1 << bitIndex;
-        }
-        /* #endregion */
-
         /* #region Files & storage */
         /**
          * Writes {@code data} into the given file.
@@ -311,6 +114,67 @@ public class Utils {
                 }
                 return false;
         }
+
+        /**
+     * Writes {@code data} into the given file.
+     *
+     * @param context
+     * @param dirName  {@link String } directory name
+     * @param fileName {@link String } file name
+     * @param append   boolean true if append mode else false
+     * @param data     {@link String } the data to write
+     * @return the written absolute file path, or <b>null</b> if it failed
+     */
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    public static File writeFile(Context context, String dirName, String fileName, boolean append, String data) {
+        try {
+            File dir = new File(context.getFilesDir(), dirName);
+            dir.mkdirs();
+            File file = new File(dir, fileName);
+            FileWriter fileWriter = new FileWriter(file, append);
+            fileWriter.write(data);
+            fileWriter.close();
+            return file;
+        } catch (IOException e) {
+            Log.e(TAG, "writeFile() failed: " + e.toString());
+            return null;
+        }
+    }
+
+    public static String readFile(Context context, String dirName, String fileName) {
+        File dir = new File(context.getFilesDir(), dirName);
+        File file = new File(dir, fileName);
+        return readFile(file);
+    }
+
+    public static String readFile(File file) {
+        StringBuilder text = new StringBuilder();
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                text.append(line + '\n');
+            }
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return text.toString();
+    }
+
+    public static File[] getFilesList(Context context, String directory) {
+//        File dir0 = Environment.getExternalStorageDirectory();
+//        File dir1 = Environment.getDataDirectory();
+//        File dir2 = Environment.getRootDirectory();
+//        File dir3 = Environment.getStorageDirectory();
+//        File dir4 = context.getExternalFilesDir(null);
+//        File dir5 = context.getFilesDir();
+        File dir = new File(context.getFilesDir(), directory);
+        dir.mkdirs();
+        File[] files = dir.listFiles();
+        Log.d(TAG, "getFilesList(): " + files.length + " files");
+        return files;
+    }
         /* #endregion */
 
         /* #region Code testing */
@@ -392,6 +256,16 @@ public class Utils {
                 } catch (Exception e) {
                 }
         }
+
+        public static Activity getActivity(Context context) {
+                while (context instanceof ContextWrapper) {
+                    if (context instanceof Activity) {
+                        return (Activity) context;
+                    }
+                    context = ((ContextWrapper) context).getBaseContext();
+                }
+                return null;
+            }
         /* #endregion */
 
         /* #region UI */
@@ -531,35 +405,51 @@ public class Utils {
         public static int pxToDp(int px) {
                 return (int) (px / Resources.getSystem().getDisplayMetrics().density);
         }
+
+        /**
+     * Calls {@link BaseActivity#toast(String)}.
+     *
+     * @param message string to display
+     */
+    public static void toast(Context context, int messageResId) {
+        Activity activity = getActivity(context);
+        if (activity != null && activity instanceof BaseActivity) {
+            ((BaseActivity) activity).toast(messageResId);
+        } else {
+            Toast.makeText(context, messageResId, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /**
+     * Calls {@link BaseActivity#toast(String)}.
+     *
+     * @param message string to display
+     */
+    public static void toast(Context context, String message) {
+        Activity activity = getActivity(context);
+        if (activity != null && activity instanceof BaseActivity) {
+            ((BaseActivity) activity).toast(message);
+        } else {
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+        }
+    }
+
+        /**
+     * Mutates and applies a filter that converts the given drawable to a Gray
+     * image. This method may be used to simulate the color of disable icons in
+     * Honeycomb's ActionBar.
+     *
+     * @return a mutated version of the given drawable with a color filter applied.
+     */
+    public static Drawable convertDrawableToGrayScale(Drawable drawable) {
+        if (drawable == null)
+            return null;
+
+        Drawable res = drawable.mutate();
+        res.setColorFilter(Color.GRAY, PorterDuff.Mode.SRC_IN);
+        return res;
+    }
+
         /* #endregion */
 
-        /* #region Date & time */
-        public enum MyDayOfTheWeek {
-                MONDAY(0x1), TUESDAY(0x2), WEDNESDAY(0x4), THURSDAY(0x8), FRIDAY(0x10), SATURDAY(0x20), SUNDAY(0x40);
-
-                private final byte code;
-
-                MyDayOfTheWeek(int code) {
-                        this.code = (byte) code;
-                }
-
-                public byte getCode() {
-                        return code;
-                }
-
-                public static String getSymbol(int position, boolean value) {
-                        return value ? (" " + DayOfWeek.of(position + 1).getDisplayName(TextStyle.NARROW,
-                                        Locale.getDefault()) + " ") : " - ";
-
-                }
-
-        }
-
-        public static Calendar timestampToCalendar(long timestamp) {
-                Date d = new Date(timestamp);
-                Calendar calendar = Calendar.getInstance();
-                calendar.setTime(d);
-                return calendar;
-        }
-        /* #endregion */
 }
