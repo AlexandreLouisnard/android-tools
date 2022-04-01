@@ -35,6 +35,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 
@@ -364,15 +365,17 @@ public class Utils {
     //endregion
 
     //region Files & storage
-    public static final String FILE_NAME_FORBIDDEN_CHARS = "?:\"*|/\\<>";
+    public static final String FORBIDDEN_CHARS_FILENAME_REGEX = "[\\\\/:*?\"<>|]";
 
-    public static InputFilter filterFILE_NAME_FORBIDDEN_CHARS = new InputFilter() {
+    public static InputFilter FORBIDDEN_CHARS_FILENAME_INPUT_FILTER = new InputFilter() {
+        final String forbiddenChars = "?:\"*|/\\<>";
+
         public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend) {
             if (source.length() < 1) {
                 return null;
             }
             char last = source.charAt(source.length() - 1);
-            if (FILE_NAME_FORBIDDEN_CHARS.indexOf(last) > -1) {
+            if (forbiddenChars.indexOf(last) > -1) {
                 return source.subSequence(0, source.length() - 1);
             }
             return null;
@@ -418,21 +421,7 @@ public class Utils {
         return file;
     }
 
-    /**
-     * Writes a file into the app-specific directory.
-     *
-     * @param context
-     * @param isExternal <b>true</b> if other apps with Manifest.permission.READ_EXTERNAL_STORAGE or Manifest.permission.WRITE_EXTERNAL_STORAGE may read/write it.<br />
-     *                   <b>false</b> if the file must be 100% private to this app
-     * @param dirName
-     * @param fileName   with or without the extension
-     * @param extension  with or without the dot, example "admp" or ".admp"
-     * @param append
-     * @param data
-     * @return
-     */
-    private static File writeFile(Context context, boolean isExternal, String dirName, String fileName, @Nullable String extension, boolean append, String data) throws IOException {
-        final File file = getFile(context, isExternal, dirName, fileName, extension, true);
+    public static File writeFile(Context context, File file, boolean append, String data) throws IOException {
         final FileWriter fileWriter = new FileWriter(file, append);
         fileWriter.write(data);
         fileWriter.close();
@@ -440,11 +429,13 @@ public class Utils {
     }
 
     public static File writeExternalFile(Context context, String dirName, String fileName, @Nullable String extension, boolean append, String data) throws IOException {
-        return writeFile(context, true, dirName, fileName, extension, append, data);
+        final File file = getFile(context, true, dirName, fileName, extension, true);
+        return writeFile(context, file, append, data);
     }
 
     public static File writeInternalFile(Context context, String dirName, String fileName, @Nullable String extension, boolean append, String data) throws IOException {
-        return writeFile(context, false, dirName, fileName, extension, append, data);
+        final File file = getFile(context, false, dirName, fileName, extension, true);
+        return writeFile(context, file, append, data);
     }
 
     public static String readFile(Context context, boolean isExternal, String dirName, String fileName, @Nullable String extension) throws IOException {
